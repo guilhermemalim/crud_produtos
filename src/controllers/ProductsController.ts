@@ -1,28 +1,20 @@
 import { Request, Response } from 'express';
-import slugify from 'slugify';
+
+import ProductRepository from '../repositories/ProductRepository';
+
 import AppError from '../errors/AppError';
 
-import IProduct from '../models/IProduct';
-
-const products: IProduct[] = [];
-
 class ProductsController {
+  private product_repo;
+
+  constructor() {
+    this.product_repo = new ProductRepository();
+  }
+
   public async create(request: Request, response: Response): Promise<Response> {
     const { name, quantity } = request.body;
 
-    const productAlreadyRegistered = products.find(p => p.name == name);
-
-    if (productAlreadyRegistered) {
-      throw new AppError('Produto já cadastrado');
-    }
-
-    const product: IProduct = {
-      name,
-      quantity,
-      slug: slugify(name),
-    };
-
-    products.push(product);
+    const product = await this.product_repo.create(name, quantity); // erro é jogado dentro do repo
 
     return response.json({
       product,
@@ -30,6 +22,8 @@ class ProductsController {
   }
 
   public async getAll(request: Request, response: Response): Promise<Response> {
+    const products = await this.product_repo.all();
+
     return response.json({
       products,
     });
@@ -41,7 +35,7 @@ class ProductsController {
   ): Promise<Response> {
     const { slug } = request.params;
 
-    const product = products.find(p => p && p.slug == slug);
+    const product = this.product_repo.getByName(slug); // erro é jogado dentro do repo
 
     if (!product) {
       throw new AppError('Produto não cadastrado', 404);
@@ -59,17 +53,10 @@ class ProductsController {
     const { name } = request.body;
     const { slug } = request.params;
 
-    const index = products.findIndex(product => product.slug == slug);
-
-    if (index == -1) {
-      throw new AppError('Produto não cadastrado', 404);
-    }
-
-    products[index].name = name;
-    products[index].slug = slugify(name);
+    const product = await this.product_repo.updateName(slug, name); // erro é jogado dentro do repo
 
     return response.json({
-      product: products[index],
+      product,
     });
   }
 
@@ -80,16 +67,10 @@ class ProductsController {
     const { quantity } = request.body;
     const { slug } = request.params;
 
-    const index = products.findIndex(product => product.slug == slug);
-
-    if (index == -1) {
-      throw new AppError('Produto não cadastrado', 404);
-    }
-
-    products[index].quantity = quantity;
+    const product = await this.product_repo.updateQuantity(slug, quantity); // erro é jogado dentro do repo
 
     return response.json({
-      product: products[index],
+      product,
     });
   }
 
@@ -99,13 +80,7 @@ class ProductsController {
   ): Promise<Response> {
     const { slug } = request.params;
 
-    const index = products.findIndex(product => product.slug == slug);
-
-    if (index == -1) {
-      throw new AppError('Produto não cadastrado', 404);
-    }
-
-    products.slice(index, 1);
+    await this.product_repo.deleteByName(slug); // o erro é jogado dentro do repo
 
     return response.sendStatus(200);
   }
