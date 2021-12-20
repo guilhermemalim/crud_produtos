@@ -11,8 +11,4 @@ const mongoCredentials = mongoConfig.username
 
 mongoose.connect(
   `mongodb+srv://${mongoCredentials}@${mongoConfig.cluster}.ge6mz.mongodb.net/${mongoConfig.database}?retryWrites=true&w=majority`,
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  },
 );
