@@ -26,6 +26,7 @@ class ProductRepository {
     const product = await Product.create({
       name,
       quantity,
+      slug: slugify(name),
     });
 
     return product;
